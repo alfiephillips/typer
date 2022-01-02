@@ -3,6 +3,7 @@ import { MongoClient } from "mongodb";
 const MONGO_URI = process.env.MONGO_URI;
 
 // Check if the mongodb uri exists
+
 if (!MONGO_URI) {
   throw new Error("Define the MONGO_URI environment variable.");
 }
@@ -10,8 +11,9 @@ if (!MONGO_URI) {
 let cachedClient = null;
 let cachedDb = null;
 
-export async function connectToDatabase() {
+export default async function connectToDatabase() {
   // Check if cached
+
   if (cachedClient && cachedDb) {
     return {
       client: cachedClient,
