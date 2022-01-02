@@ -1,4 +1,5 @@
 import { MongoClient } from "mongodb";
+import validator from "validator";
 
 const MONGO_URI = process.env.MONGO_URI;
 
@@ -11,7 +12,7 @@ if (!MONGO_URI) {
 let cachedClient = null;
 let cachedDb = null;
 
-export default async function connectToDatabase() {
+export async function connectToDatabase() {
   // Check if cached
 
   if (cachedClient && cachedDb) {
@@ -44,4 +45,86 @@ export default async function connectToDatabase() {
     client: cachedClient,
     db: cachedDb,
   };
+}
+
+export class MongoHelper {
+  async createUser(res, username, email, password) {
+    // Find the user table
+
+    const { db } = await connectToDatabase();
+    const users = db.collection("user");
+
+    // Error handling for database insertion
+
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({
+        data: {
+          user: null,
+          message: "Failed creating user.",
+          error: "Email is not valid!",
+        },
+      });
+    }
+
+    if (username.length > 16 || username.length < 4) {
+      return res.status(400).json({
+        data: {
+          user: null,
+          message: "Failed creating user.",
+          error: "Username must be between 4 and 16 characters!",
+        },
+      });
+    }
+
+    if (
+      validator.isStrongPassword(password, {
+        minLength: 8,
+        minLowercase: 1,
+        minUppercase: 1,
+        minNumbers: 1,
+        returnScore: false,
+      })
+    ) {
+      return res.status(400).json({
+        data: {
+          user: null,
+          message: "Failed creating user.",
+          error: "Password has not met the specified criteria!",
+        },
+      });
+    }
+
+    // TODO: Hash the password
+
+    // Create the field for insertion
+
+    const doc = {
+      username,
+      email,
+      password,
+    };
+
+    // Create a unique index for username and email
+
+    await users.createIndex({ username: 1, email: 1 }, { unique: true });
+
+    try {
+      await users.insertOne(doc);
+      return res.status(200).json({
+        data: {
+          user: doc,
+          message: "User has been successfully created.",
+          error: null,
+        },
+      });
+    } catch (err) {
+      return res.status(500).json({
+        data: {
+          user: null,
+          message: "Internal server error.",
+          error: err.message,
+        },
+      });
+    }
+  }
 }
