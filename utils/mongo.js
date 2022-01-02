@@ -1,4 +1,6 @@
 import { MongoClient } from "mongodb";
+
+import bcrypt from "bcrypt";
 import validator from "validator";
 
 const MONGO_URI = process.env.MONGO_URI;
@@ -56,9 +58,20 @@ export class MongoHelper {
 
     // Error handling for database insertion
 
+    if (!username || !email || !password) {
+      return res.status(400).json({
+        data: {
+          user: null,
+          message: "Failed creating user.",
+          error: "Data fields are empty!",
+        },
+      });
+    }
+
     if (!validator.isEmail(email)) {
       return res.status(400).json({
         data: {
+          method: "POST",
           user: null,
           message: "Failed creating user.",
           error: "Email is not valid!",
@@ -69,6 +82,7 @@ export class MongoHelper {
     if (username.length > 16 || username.length < 4) {
       return res.status(400).json({
         data: {
+          method: "POST",
           user: null,
           message: "Failed creating user.",
           error: "Username must be between 4 and 16 characters!",
@@ -87,6 +101,7 @@ export class MongoHelper {
     ) {
       return res.status(400).json({
         data: {
+          method: "POST",
           user: null,
           message: "Failed creating user.",
           error: "Password has not met the specified criteria!",
@@ -94,7 +109,11 @@ export class MongoHelper {
       });
     }
 
-    // TODO: Hash the password
+    // Hash the password
+
+    const saltRounds = 10;
+    const salt = await bcrypt.genSalt(saltRounds);
+    password = await bcrypt.hash(password, salt);
 
     // Create the field for insertion
 
@@ -112,6 +131,7 @@ export class MongoHelper {
       await users.insertOne(doc);
       return res.status(200).json({
         data: {
+          method: "POST",
           user: doc,
           message: "User has been successfully created.",
           error: null,
@@ -120,6 +140,7 @@ export class MongoHelper {
     } catch (err) {
       return res.status(500).json({
         data: {
+          method: "POST",
           user: null,
           message: "Internal server error.",
           error: err.message,
