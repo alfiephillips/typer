@@ -1,5 +1,6 @@
 import Meta from "./Meta";
 import { Box, Container } from "@chakra-ui/react";
+import Navbar from "./Navbar";
 
 export default function Layout({ children, router }) {
   return (
@@ -10,6 +11,7 @@ export default function Layout({ children, router }) {
         url="https://google.com"
         keywords="typing test"
       />
+      <Navbar path={router.asPath} />
       <Container maxW="container.md" pt={14}>
         {children}
       </Container>

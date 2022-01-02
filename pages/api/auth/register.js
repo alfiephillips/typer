@@ -1,12 +1,42 @@
-import connectToDatabase from "../../../utils/mongo";
+import { MongoHelper } from "../../../utils/mongo";
+
+const helper = new MongoHelper();
 
 export default async function handler(req, res) {
-  const { client, db } = connectToDatabase();
+  switch (req.method) {
+    case "GET":
+      return res.status(200).json({
+        data: {
+          method: "GET",
+          user: null,
+          message: "Register route.",
+          error: null,
+        },
+      });
 
-  const users = db.collection("user");
-  return res.status(200).json({
-    method: req.method,
-    path: req.path,
-    message: "Register route",
-  });
+    case "POST":
+      const { username, email, password } = req.body;
+      const response = await helper.createUser(username, email, password);
+      return response;
+
+    case "PUT":
+      return res.status(200).json({
+        data: {
+          method: "PUT",
+          user: null,
+          message: "Register route.",
+          error: null,
+        },
+      });
+
+    case "DELETE":
+      return res.status(200).json({
+        data: {
+          method: "DELETE",
+          user: null,
+          message: "Register route.",
+          error: null,
+        },
+      });
+  }
 }
